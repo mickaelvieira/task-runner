@@ -1,0 +1,163 @@
+#!/bin/bash
+
+#############################################################################
+#                              Tasks Runner                                 #
+#############################################################################
+
+set -o nounset
+set -o errexit
+set -o pipefail
+#set -x
+
+declare -r version="0.0.1"
+declare -r script=$(basename $0)
+declare -r base_dir="$(dirname $(readlink ${0}))"
+declare -r work_dir="$(pwd -P)"
+
+declare -r task="${1:-}"
+declare -a tasks=( clean unwatch watch watch_js watch_css watch_test test build build_js build_css )
+
+source "${base_dir}/logger.sh"
+source "${base_dir}/tmux.sh"
+
+usage() {
+    help+="Usage:\n"
+    help+="\t${script} [--help] <task>\n"
+    help+="Options:\n"
+    help+="\t-h Display this help\n"
+    help+="Tasks available: \n"
+    help+=" \t${tasks[@]}\n"
+    echo -e ${help} 1>&2
+    exit 1
+}
+
+check_dependencies() {
+
+    local deps=(
+        tmux
+        npm
+        browserify
+        exorcist
+        watchify
+        uglifyjs
+        karma
+        mocha
+        phantomjs
+    )
+
+    for dep in ${deps[@]}
+    do
+        command -v "${dep}" >/dev/null 2>&1 || error "'${dep}' is required but it is not installed."
+    done
+}
+
+add_npm_binaries_to_path() {
+
+    local npm_dir="${work_dir}/node_modules/.bin"
+    if [[ ! -d "${npm_dir}" ]]
+    then
+        error "Cannot find node binaries in ${npm_dir}"
+    else
+        export PATH="${npm_dir}:$PATH"
+    fi
+}
+
+#is_valid_task() {
+#
+#    local needle="${1}"
+#    shift
+#    local haystack=("${@}")
+#    local found=""
+#
+#    for t in "${tasks[@]}"
+#    do
+#        if [[ "${t}" == "${needle}" ]]
+#        then
+#            found="${t}"
+#            break
+#        fi
+#    done
+#
+#    echo ${found}
+#}
+
+# Display the command help screen
+if [[ "${task}" == "--help" || "${task}" == "-h" ]]
+then
+    usage
+fi
+
+# Let's get started
+info "${script}@${version} ${work_dir}"
+
+add_npm_binaries_to_path
+check_dependencies
+
+for item in ${tasks[*]}
+do
+    source "${base_dir}/tasks/${item}.sh"
+done
+
+
+exit
+
+#declare -a tasks=( watch unwatch test build_js vendors polyfills)
+#declare -r base_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+
+
+
+cd "${base_dir}"
+
+declare -a entries=($(find ./html/js -name index.js))
+
+# Add node modules binaries to the path
+export PATH="${base_dir}/node_modules/.bin:$PATH"
+
+
+watch() {
+    start_tmux
+    run_karma
+    run_watch
+
+    tmux ls
+    tmux list-windows
+
+#    tmux attach-session -t "${tmux_session}"
+}
+
+unwatch() {
+    stop_tmux
+}
+
+build() {
+    polyfills
+    vendors
+    build_js
+}
+
+build_js() {
+    run_build_js
+}
+
+polyfills() {
+
+    local target="polyfills.min.js"
+    local files=()
+
+    cat ${files[@]} | uglifyjs --compress --mangle --screw-ie8 --output "${target}"
+}
+
+vendors() {
+
+    local target="vendor.min.js"
+    local files=()
+
+    cat ${files[@]} | uglifyjs --compress --mangle --screw-ie8 --output "${target}"
+}
+
+
+
+eval "${task}"
+
+exit 0
+
