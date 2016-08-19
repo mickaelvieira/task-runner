@@ -13,11 +13,15 @@ declare -r VERSION="0.0.1"
 
 declare -r SCRIPT=$(basename $0)
 declare -r BASE_DIR="$(dirname $(readlink ${0}))"
-declare -r TASKS_DIR="${BASE_DIR}/lib/tasks"
+declare -r LIB_DIR="${BASE_DIR}/lib"
+declare -r TASKS_DIR="${LIB_DIR}/tasks"
 
 declare -r WORKING_DIR="$(pwd -P)"
 declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
 declare -r RC_FILE="${WORKING_DIR}/.trunrc"
+
+declare -r DEFAULT_DIST_DIR="${WORKING_DIR}/dist"
+declare -r DEFAULT_SRC_DIR="${WORKING_DIR}/html"
 
 declare -r CUR_TASK="${1:-}"
 
@@ -34,8 +38,8 @@ declare -ra TASKS=(
     build_css
 )
 
-source "${BASE_DIR}/lib/utils/logger.sh"
-source "${BASE_DIR}/lib/tmux.sh"
+source "${LIB_DIR}/utils/logger.sh"
+source "${LIB_DIR}/tmux.sh"
 
 usage() {
     help+="Usage:\n"
@@ -69,11 +73,9 @@ check_dependencies() {
 }
 
 add_npm_bin_to_path() {
-
-    [[ ! -d $NPM_DIR ]] && \
-        error "Cannot find node binaries in '${NPM_DIR}'!"
-
-    export PATH="${NPM_DIR}:$PATH"
+    # Include the local node binaries if there are found
+    [[ -d $NPM_DIR ]] && \
+        export PATH="${NPM_DIR}:$PATH"
 }
 
 include_lib() {
@@ -94,33 +96,41 @@ include_conf() {
         error "Configuration file '${RC_FILE}' is missing!"
 
     source $RC_FILE
+
+    readonly SRC_DIR=$DEFAULT_SRC_DIR
+    readonly DIST_DIR=$DEFAULT_DIST_DIR
+
+    if [[ ! -d $DIST_DIR ]]; then
+        mkdir -p "${DIST_DIR}/js"
+        mkdir -p "${DIST_DIR}/css"
+    fi
+
+    info "Source: ${SRC_DIR}"
+    info "Distribution: ${DIST_DIR}"
 }
 
+is_valid_task() {
 
-#is_valid_task() {
-#
-#    local needle="${1}"
-#    shift
-#    local haystack=("${@}")
-#    local found=""
-#
-#    for t in "${TASKS[@]}"
-#    do
-#        if [[ "${t}" == "${needle}" ]]
-#        then
-#            found="${t}"
-#            break
-#        fi
-#    done
-#
-#    echo ${found}
-#}
+    local needle="${1}"
+    local found=""
 
+    for task in "${TASKS[@]}"; do
+        if [[ $task  == $needle ]]; then
+            found=$task
+            break
+        fi
+    done
+
+    echo ${found}
+}
 
 main() {
 
     # Display the command help screen
     [[ $CUR_TASK == "--help" || $CUR_TASK == "-h" ]] && usage
+
+    # Make sure this is valid task
+    [[ -z $(is_valid_task $CUR_TASK) ]] && error "'${CUR_TASK}' is not a valid task!"
 
     # Let's get started
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
@@ -128,11 +138,19 @@ main() {
     add_npm_bin_to_path
     check_dependencies
     include_conf
-    include_lib
 
-    #declare -a entries=($(find ./html/js -name index.js))
+    if [[ $CUR_TASK == "build" || $CUR_TASK == "watch" ]]; then
+        local lib_script="${LIB_DIR}/${CUR_TASK}.sh"
+    else
+        local lib_script="${TASKS_DIR}/${CUR_TASK}.sh"
+    fi
 
-    eval $CUR_TASK
+    [[ ! -f $lib_script ]] && \
+        error "'${lib_script}' script is missing in '${TASKS_DIR}'!"
+
+    info "Starting ${CUR_TASK}"
+
+    source $lib_script
 }
 
 main

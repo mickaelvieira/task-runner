@@ -1,4 +1,3 @@
-#!/bin/bash
 
 declare -r TMUX_SESSION="tasks-runner"
 
@@ -23,4 +22,3 @@ stop_tmux() {
 
     [[ $? -ne 1 ]] && tmux kill-session -t $TMUX_SESSION
 }
-

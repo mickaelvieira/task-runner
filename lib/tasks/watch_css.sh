@@ -1,15 +1,16 @@
 #!/bin/bash
-
-
-
 watch_css() {
+
+
+    echo "watch css task"
+
     for entry in ${entries[@]}
     do
-        watch_entry "${entry}"
+        watch_css_entry "${entry}"
     done
 }
 
-watch_entry() {
+watch_css_entry() {
 
     local entry="$1"
     local dir=$(dirname ${entry})

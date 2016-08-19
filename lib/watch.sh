@@ -1,6 +1,7 @@
-#!/bin/bash
 
 watch() {
+
+    echo "watch task"
 
     watch_test
     watch_js

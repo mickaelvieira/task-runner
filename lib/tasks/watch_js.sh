@@ -1,21 +1,24 @@
-#!/bin/bash
 
 watch_js() {
-    for entry in ${entries[@]}
-    do
-        watch_entry "${entry}"
+
+    local entries=($(find "${SRC_DIR}/js" -name index.js))
+    local dest="${DIST_DIR}/js"
+
+    for path_entry in ${entries[@]}; do
+
+        local base=$(dirname ${path_entry})
+        local name=${base##*/}
+        local bundle="${dest}/${name}.js"
+        local source_map="${dest}/${name}.js.map"
+
+        echo "---"
+        info "Bundle: ${name}"
+        info "Source: ${path_entry}"
+        info "Destination: ${bundle}"
+        info "Source map: ${source_map}"
+
+        tmux new-window -c $WORKING_DIR -n ${name} "watchify ${path_entry} -v -d -o \"exorcist ${source_map} > ${bundle}\""
     done
 }
 
-watch_entry() {
-
-    local entry="$1"
-    local dir=$(dirname ${entry})
-    local bundle="bundle.js"
-    local map="bundle.js.map"
-    local name=${dir##*/}
-
-    info "Bundle '${name}': ${entry} > ${bundle} ( ${map} )"
-
-    tmux new-window -c "${base_dir}" -n ${name} "watchify ${entry} -v -d -o \"exorcist ${dir}/${map} > ${dir}/${bundle}\""
-}
+watch_js

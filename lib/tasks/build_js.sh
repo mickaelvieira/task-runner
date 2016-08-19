@@ -1,24 +1,23 @@
-#!/bin/bash
 
 build_js() {
-    for entry in ${entries[@]}
-    do
-        build_entry "${entry}"
+
+    local entries=($(find "${SRC_DIR}/js" -name index.js))
+    local dest="${DIST_DIR}/js"
+
+    for path_entry in ${entries[@]}; do
+
+        local base=$(dirname ${path_entry})
+        local name=${base##*/}
+        local bundle="${dest}/${name}.js"
+
+        echo "---"
+        info "Bundle: ${name}"
+        info "Source: ${path_entry}"
+        info "Destination: ${bundle}"
+
+        browserify -e $path_entry --debug | \
+            uglifyjs --compress --mangle --screw-ie8 --output ${bundle}
     done
 }
 
-build_entry() {
-
-    local entry="$1"
-    local dir=$(dirname ${entry})
-    local bundle="${dir}/bundle.js"
-    local name=${dir##*/}
-
-    info "Bundle '${name}': ${entry} > ${bundle}"
-
-    browserify -e $entry --debug | \
-        uglifyjs --compress --mangle --screw-ie8 --output $bundle
-}
-
-
-
+build_js
