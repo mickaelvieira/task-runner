@@ -52,11 +52,11 @@ usage() {
     exit 1
 }
 
+# Check whether all dependencies are executable
 check_dependencies() {
 
     local deps=(
         tmux
-#        npm
         browserify
         exorcist
         watchify
@@ -72,8 +72,9 @@ check_dependencies() {
     done
 }
 
+# Include the local node binaries if there are found
 add_npm_bin_to_path() {
-    # Include the local node binaries if there are found
+
     [[ -d $NPM_DIR ]] && \
         export PATH="${NPM_DIR}:$PATH"
 }
@@ -90,6 +91,7 @@ include_lib() {
     done
 }
 
+# Include the local configuration
 include_conf() {
 
     [[ ! -f $RC_FILE ]] && \
@@ -109,6 +111,9 @@ include_conf() {
     info "Distribution: ${DIST_DIR}"
 }
 
+# Check whether the task is valid
+# It returns the task name if it was found
+# otherwise it returns an empty value
 is_valid_task() {
 
     local needle="${1}"
