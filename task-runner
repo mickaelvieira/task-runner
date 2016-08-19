@@ -7,7 +7,6 @@
 set -o nounset
 set -o errexit
 set -o pipefail
-#set -x
 
 declare -r VERSION="0.0.1"
 
@@ -22,8 +21,6 @@ declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
 declare -r DEFAULT_DIST_DIR="${WORKING_DIR}/dist"
 declare -r DEFAULT_SRC_DIR="${WORKING_DIR}/html"
-
-declare -r CUR_TASK="${1:-}"
 
 declare -ra TASKS=(
     clean
@@ -116,7 +113,7 @@ include_conf() {
 # otherwise it returns an empty value
 is_valid_task() {
 
-    local needle="${1}"
+    local needle="${1:-}"
     local found=""
 
     for task in "${TASKS[@]}"; do
@@ -129,10 +126,22 @@ is_valid_task() {
     echo ${found}
 }
 
+declare -r arg1="${1:-}"
+declare -r arg2="${2:-}"
+
 main() {
 
     # Display the command help screen
-    [[ $CUR_TASK == "--help" || $CUR_TASK == "-h" ]] && usage
+    [[ $arg1 == "--help" || $arg1 == "-h" ]] && usage
+
+    # Active debug mode
+    # TODO That'll do the trick for now but it'd be nicer to use getopts
+    if [[ $arg1 == "--debug" ]]; then
+        set -x
+        declare -r CUR_TASK=$arg2
+    else
+        declare -r CUR_TASK=$arg1
+    fi
 
     # Make sure this is valid task
     [[ -z $(is_valid_task $CUR_TASK) ]] && error "'${CUR_TASK}' is not a valid task!"
