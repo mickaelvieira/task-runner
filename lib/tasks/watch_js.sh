@@ -19,6 +19,3 @@ watch_entry() {
 
     tmux new-window -c "${base_dir}" -n ${name} "watchify ${entry} -v -d -o \"exorcist ${dir}/${map} > ${dir}/${bundle}\""
 }
-
-
-

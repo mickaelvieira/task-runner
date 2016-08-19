@@ -9,24 +9,39 @@ set -o errexit
 set -o pipefail
 #set -x
 
-declare -r version="0.0.1"
-declare -r script=$(basename $0)
-declare -r base_dir="$(dirname $(readlink ${0}))"
-declare -r work_dir="$(pwd -P)"
+declare -r VERSION="0.0.1"
+declare -r SCRIPT=$(basename $0)
+declare -r BASE_DIR="$(dirname $(readlink ${0}))"
+declare -r WORKING_DIR="$(pwd -P)"
+declare -r TASKS_DIR="${BASE_DIR}/lib/tasks"
+declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
+declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
-declare -r task="${1:-}"
-declare -a tasks=( clean unwatch watch watch_js watch_css watch_test test build build_js build_css )
+declare -r CUR_TASK="${1:-}"
 
-source "${base_dir}/lib/utils/logger.sh"
-source "${base_dir}/lib/tmux.sh"
+declare -ra TASKS=(
+    clean
+    unwatch
+    watch
+    watch_js
+    watch_css
+    watch_test
+    test
+    build
+    build_js
+    build_css
+)
+
+source "${BASE_DIR}/lib/utils/logger.sh"
+source "${BASE_DIR}/lib/tmux.sh"
 
 usage() {
     help+="Usage:\n"
-    help+="\t${script} [--help] <task>\n"
+    help+="\t${SCRIPT} [--help] <task>\n"
     help+="Options:\n"
     help+="\t-h Display this help\n"
     help+="Tasks available: \n"
-    help+=" \t${tasks[@]}\n"
+    help+=" \t${TASKS[@]}\n"
     echo -e ${help} 1>&2
     exit 1
 }
@@ -47,20 +62,37 @@ check_dependencies() {
 
     for dep in ${deps[@]}
     do
-        command -v "${dep}" >/dev/null 2>&1 || error "'${dep}' is required but it is not installed."
+        command -v "${dep}" > /dev/null 2>&1 || error "'${dep}' is required but it is not installed."
     done
 }
 
-add_npm_binaries_to_path() {
+add_npm_bin_to_path() {
 
-    local npm_dir="${work_dir}/node_modules/.bin"
-    if [[ ! -d "${npm_dir}" ]]
-    then
-        error "Cannot find node binaries in ${npm_dir}"
-    else
-        export PATH="${npm_dir}:$PATH"
-    fi
+    [[ ! -d "${NPM_DIR}" ]] && error "Cannot find node binaries in '${NPM_DIR}'!"
+
+    export PATH="${NPM_DIR}:$PATH"
 }
+
+include_task_scripts() {
+
+    local task_script=""
+    for task in ${TASKS[*]}
+    do
+        task_script="${TASKS_DIR}/${task}.sh"
+
+        [[ ! -f "${task_script}" ]] && error "'${item}' script is missing in '${TASKS_DIR}'!"
+
+        source "${task_script}"
+    done
+}
+
+include_conf() {
+
+    [[ ! -f "${RC_FILE}" ]] && error "Configuration file '${RC_FILE}' is missing!"
+
+    source "${RC_FILE}"
+}
+
 
 #is_valid_task() {
 #
@@ -69,7 +101,7 @@ add_npm_binaries_to_path() {
 #    local haystack=("${@}")
 #    local found=""
 #
-#    for t in "${tasks[@]}"
+#    for t in "${TASKS[@]}"
 #    do
 #        if [[ "${t}" == "${needle}" ]]
 #        then
@@ -81,83 +113,29 @@ add_npm_binaries_to_path() {
 #    echo ${found}
 #}
 
-# Display the command help screen
-if [[ "${task}" == "--help" || "${task}" == "-h" ]]
-then
-    usage
-fi
 
-# Let's get started
-info "${script}@${version} ${work_dir}"
+main() {
 
-add_npm_binaries_to_path
-check_dependencies
+    # Display the command help screen
+    if [[ "${CUR_TASK}" == "--help" || "${CUR_TASK}" == "-h" ]]
+    then
+        usage
+    fi
 
-for item in ${tasks[*]}
-do
-    source "${base_dir}/lib/tasks/${item}.sh"
-done
+    # Let's get started
+    info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
 
+    add_npm_bin_to_path
+    check_dependencies
+    include_conf
+    include_task_scripts
 
-exit
+    #declare -a entries=($(find ./html/js -name index.js))
 
-#declare -a tasks=( watch unwatch test build_js vendors polyfills)
-#declare -r base_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-
-
-
-cd "${base_dir}"
-
-declare -a entries=($(find ./html/js -name index.js))
-
-# Add node modules binaries to the path
-export PATH="${base_dir}/node_modules/.bin:$PATH"
-
-
-watch() {
-    start_tmux
-    run_karma
-    run_watch
-
-    tmux ls
-    tmux list-windows
-
-#    tmux attach-session -t "${tmux_session}"
+    eval "${CUR_TASK}"
 }
 
-unwatch() {
-    stop_tmux
-}
-
-build() {
-    polyfills
-    vendors
-    build_js
-}
-
-build_js() {
-    run_build_js
-}
-
-polyfills() {
-
-    local target="polyfills.min.js"
-    local files=()
-
-    cat ${files[@]} | uglifyjs --compress --mangle --screw-ie8 --output "${target}"
-}
-
-vendors() {
-
-    local target="vendor.min.js"
-    local files=()
-
-    cat ${files[@]} | uglifyjs --compress --mangle --screw-ie8 --output "${target}"
-}
-
-
-
-eval "${task}"
+main
 
 exit 0
 
