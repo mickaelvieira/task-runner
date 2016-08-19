@@ -1,15 +1,20 @@
 
 watch_js() {
 
+    local base
+    local name
+    local bundle
+    local source_map
+
     local entries=($(find "${SRC_DIR}/js" -name index.js))
     local dest="${DIST_DIR}/js"
 
     for path_entry in ${entries[@]}; do
 
-        local base=$(dirname ${path_entry})
-        local name=${base##*/}
-        local bundle="${dest}/${name}.js"
-        local source_map="${dest}/${name}.js.map"
+        base=$(dirname ${path_entry})
+        name=${base##*/}
+        bundle="${dest}/${name}.js"
+        source_map="${dest}/${name}.js.map"
 
         echo "---"
         info "Bundle: ${name}"
