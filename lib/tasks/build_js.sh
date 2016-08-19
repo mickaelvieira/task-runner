@@ -16,7 +16,8 @@ build_entry() {
 
     info "Bundle '${name}': ${entry} > ${bundle}"
 
-    browserify -e ${entry} --debug | uglifyjs --compress --mangle --screw-ie8 --output "${bundle}"
+    browserify -e $entry --debug | \
+        uglifyjs --compress --mangle --screw-ie8 --output $bundle
 }
 
 

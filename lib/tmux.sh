@@ -1,32 +1,26 @@
 #!/bin/bash
 
-declare -r tmux_session="tasks-runner"
+declare -r TMUX_SESSION="tasks-runner"
 
 is_server_up() {
     tmux info &> /dev/null
 }
 
 has_session() {
-    tmux has-session -t "${tmux_session}" &> /dev/null
+    tmux has-session -t $TMUX_SESSION &> /dev/null
 }
 
 start_tmux() {
 
     is_server_up && has_session
 
-    if [[ $? -eq 1  ]]
-    then
-        tmux new-session -s "${tmux_session}" -d
-    fi
+    [[ $? -eq 1  ]] && tmux new-session -s $TMUX_SESSION -d
 }
 
 stop_tmux() {
 
     has_session
 
-    if [[ $? -ne 1 ]]
-    then
-        tmux kill-session -t "${tmux_session}"
-    fi
+    [[ $? -ne 1 ]] && tmux kill-session -t $TMUX_SESSION
 }
 

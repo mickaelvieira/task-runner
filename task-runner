@@ -52,7 +52,7 @@ check_dependencies() {
 
     local deps=(
         tmux
-        npm
+#        npm
         browserify
         exorcist
         watchify
@@ -62,41 +62,38 @@ check_dependencies() {
         phantomjs
     )
 
-    for dep in ${deps[@]}
-    do
-        command -v "${dep}" > /dev/null 2>&1 || \
+    for dep in ${deps[@]}; do
+        command -v $dep > /dev/null 2>&1 || \
             error "'${dep}' is required but it is not installed."
     done
 }
 
 add_npm_bin_to_path() {
 
-    [[ ! -d "${NPM_DIR}" ]] && \
+    [[ ! -d $NPM_DIR ]] && \
         error "Cannot find node binaries in '${NPM_DIR}'!"
 
     export PATH="${NPM_DIR}:$PATH"
 }
 
-include_task_scripts() {
+include_lib() {
 
-    local task_script=""
-    for task in ${TASKS[*]}
-    do
-        task_script="${TASKS_DIR}/${task}.sh"
+    for task in ${TASKS[*]}; do
+        local file="${TASKS_DIR}/${task}.sh"
 
-        [[ ! -f "${task_script}" ]] && \
+        [[ ! -f $file ]] && \
             error "'${item}' script is missing in '${TASKS_DIR}'!"
 
-        source "${task_script}"
+        source $file
     done
 }
 
 include_conf() {
 
-    [[ ! -f "${RC_FILE}" ]] && \
+    [[ ! -f $RC_FILE ]] && \
         error "Configuration file '${RC_FILE}' is missing!"
 
-    source "${RC_FILE}"
+    source $RC_FILE
 }
 
 
@@ -123,10 +120,7 @@ include_conf() {
 main() {
 
     # Display the command help screen
-    if [[ "${CUR_TASK}" == "--help" || "${CUR_TASK}" == "-h" ]]
-    then
-        usage
-    fi
+    [[ $CUR_TASK == "--help" || $CUR_TASK == "-h" ]] && usage
 
     # Let's get started
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
@@ -134,11 +128,11 @@ main() {
     add_npm_bin_to_path
     check_dependencies
     include_conf
-    include_task_scripts
+    include_lib
 
     #declare -a entries=($(find ./html/js -name index.js))
 
-    eval "${CUR_TASK}"
+    eval $CUR_TASK
 }
 
 main
