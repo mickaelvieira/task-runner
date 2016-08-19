@@ -10,10 +10,12 @@ set -o pipefail
 #set -x
 
 declare -r VERSION="0.0.1"
+
 declare -r SCRIPT=$(basename $0)
 declare -r BASE_DIR="$(dirname $(readlink ${0}))"
-declare -r WORKING_DIR="$(pwd -P)"
 declare -r TASKS_DIR="${BASE_DIR}/lib/tasks"
+
+declare -r WORKING_DIR="$(pwd -P)"
 declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
 declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
@@ -62,13 +64,15 @@ check_dependencies() {
 
     for dep in ${deps[@]}
     do
-        command -v "${dep}" > /dev/null 2>&1 || error "'${dep}' is required but it is not installed."
+        command -v "${dep}" > /dev/null 2>&1 || \
+            error "'${dep}' is required but it is not installed."
     done
 }
 
 add_npm_bin_to_path() {
 
-    [[ ! -d "${NPM_DIR}" ]] && error "Cannot find node binaries in '${NPM_DIR}'!"
+    [[ ! -d "${NPM_DIR}" ]] && \
+        error "Cannot find node binaries in '${NPM_DIR}'!"
 
     export PATH="${NPM_DIR}:$PATH"
 }
@@ -80,7 +84,8 @@ include_task_scripts() {
     do
         task_script="${TASKS_DIR}/${task}.sh"
 
-        [[ ! -f "${task_script}" ]] && error "'${item}' script is missing in '${TASKS_DIR}'!"
+        [[ ! -f "${task_script}" ]] && \
+            error "'${item}' script is missing in '${TASKS_DIR}'!"
 
         source "${task_script}"
     done
@@ -88,7 +93,8 @@ include_task_scripts() {
 
 include_conf() {
 
-    [[ ! -f "${RC_FILE}" ]] && error "Configuration file '${RC_FILE}' is missing!"
+    [[ ! -f "${RC_FILE}" ]] && \
+        error "Configuration file '${RC_FILE}' is missing!"
 
     source "${RC_FILE}"
 }
