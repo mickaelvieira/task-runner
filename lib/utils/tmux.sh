@@ -10,15 +10,11 @@ has_session() {
 }
 
 start_tmux() {
-
     is_server_up && has_session
-
     [[ $? -eq 1  ]] && tmux new-session -s $TMUX_SESSION -d
 }
 
 stop_tmux() {
-
     has_session
-
     [[ $? -ne 1 ]] && tmux kill-session -t $TMUX_SESSION
 }

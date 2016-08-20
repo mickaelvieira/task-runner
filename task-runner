@@ -106,14 +106,18 @@ include_lib() {
 }
 
 make_target_directories() {
-    [[ ! -d "${DIST_DIR}/js" ]] && mkdir -p "${DIST_DIR}/js"
-    [[ ! -d "${DIST_DIR}/css" ]] && mkdir -p "${DIST_DIR}/css"
+    [[ ! -d "${DIST_DIR}/js" ]] && \
+        mkdir -p "${DIST_DIR}/js"
+    [[ ! -d "${DIST_DIR}/css" ]] && \
+        mkdir -p "${DIST_DIR}/css"
     return 0
 }
 
 check_source_directories() {
-    [[ ! -d "${SRC_DIR}/js" ]] && error "Javascript source directory not found in ${SRC_DIR}/js"
-    [[ ! -d "${SRC_DIR}/scss" ]] && error "SASS source directory not found in ${SRC_DIR}/scss"
+    [[ ! -d "${SRC_DIR}/js" ]] && \
+        error "Javascript source directory not found in ${SRC_DIR}/js"
+    [[ ! -d "${SRC_DIR}/scss" ]] && \
+        error "SASS source directory not found in ${SRC_DIR}/scss"
     return 0
 }
 
