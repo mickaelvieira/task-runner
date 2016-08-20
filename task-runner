@@ -37,9 +37,7 @@ source "${LIB_DIR}/utils/logger.sh"
 source "${LIB_DIR}/tmux.sh"
 
 show_usage() {
-
     local help=
-
     help+="Usage: ${SCRIPT} [options] <task>\n"
     help+="Version: ${VERSION}\n"
     help+="Options:\n"
@@ -52,7 +50,6 @@ show_usage() {
 
 # Check whether all dependencies are executable
 check_dependencies() {
-
     local deps=(
         tmux
         browserify
@@ -72,14 +69,12 @@ check_dependencies() {
 
 # Include the local node binaries if there are found
 add_npm_bin_to_path() {
-
     [[ -d $NPM_DIR ]] && \
         export PATH="${NPM_DIR}:$PATH"
 }
 
 # Include the local configuration
 include_conf() {
-
     [[ ! -f $RC_FILE ]] && \
         error "Configuration file '${RC_FILE}' is missing!"
 
@@ -97,11 +92,26 @@ include_conf() {
     info "Distribution: ${DIST_DIR}"
 }
 
+include_lib() {
+    local task=$1
+    local lib_path=
+
+    if [[ $task == "build" || $task == "watch" ]]; then
+        lib_path="${LIB_DIR}/${task}.sh"
+    else
+        lib_path="${TASKS_DIR}/${task}.sh"
+    fi
+
+    [[ ! -f $lib_path ]] && \
+        error "'${lib_path}' script is missing in '${TASKS_DIR}'!"
+
+    source $lib_path
+}
+
 # Check whether the task is valid
 # It returns the task name if it was found
 # otherwise it returns an empty value
-is_valid_task() {
-
+check_task() {
     local needle="${1:-}"
     local found=
 
@@ -133,7 +143,7 @@ main() {
     [[ -z $task ]] && show_usage
 
     # Make sure this is valid task
-    [[ -z $(is_valid_task $task) ]] && error "'${task}' is not a valid task!"
+    [[ -z $(check_task $task) ]] && error "'${task}' is not a valid task!"
 
     # Let's get started
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
@@ -141,19 +151,7 @@ main() {
     add_npm_bin_to_path
     check_dependencies
     include_conf
-
-    if [[ $task == "build" || $task == "watch" ]]; then
-        local lib_script="${LIB_DIR}/${task}.sh"
-    else
-        local lib_script="${TASKS_DIR}/${task}.sh"
-    fi
-
-    [[ ! -f $lib_script ]] && \
-        error "'${lib_script}' script is missing in '${TASKS_DIR}'!"
-
-    info "Starting ${task}"
-
-    source $lib_script
+    include_lib $task
 }
 
 main "$@"
