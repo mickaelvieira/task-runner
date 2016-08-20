@@ -4,9 +4,7 @@
 #                              Tasks Runner                                 #
 #############################################################################
 
-set -o nounset
-set -o errexit
-set -o pipefail
+set -e -u -o pipefail
 
 declare -r VERSION="0.0.1"
 
@@ -20,9 +18,8 @@ declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
 declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
 declare -r DEFAULT_DIST_DIR="${WORKING_DIR}/dist"
-declare -r DEFAULT_SRC_DIR="${WORKING_DIR}/html"
+declare -r DEFAULT_SRC_DIR="${WORKING_DIR}/web"
 
-declare -i debug=0
 declare -ra TASKS=(
     clean
     unwatch
@@ -39,14 +36,16 @@ declare -ra TASKS=(
 source "${LIB_DIR}/utils/logger.sh"
 source "${LIB_DIR}/tmux.sh"
 
-usage() {
-    help+="Usage:\n"
-    help+="\t${SCRIPT} [options] <task>\n"
+show_usage() {
+
+    local help=
+
+    help+="Usage: ${SCRIPT} [options] <task>\n"
+    help+="Version: ${VERSION}\n"
     help+="Options:\n"
-    help+="\t-h This help\n"
-    help+="\t-d Debug mode\n"
-    help+="Tasks available: \n"
-    help+=" \t${TASKS[@]}\n"
+    help+=" -h: This help\n"
+    help+=" -d: Debug mode\n"
+    help+="Tasks available: ${TASKS[@]}\n"
     echo -e ${help} 1>&2
     exit 1
 }
@@ -78,18 +77,6 @@ add_npm_bin_to_path() {
         export PATH="${NPM_DIR}:$PATH"
 }
 
-include_lib() {
-
-    for task in ${TASKS[*]}; do
-        local file="${TASKS_DIR}/${task}.sh"
-
-        [[ ! -f $file ]] && \
-            error "'${item}' script is missing in '${TASKS_DIR}'!"
-
-        source $file
-    done
-}
-
 # Include the local configuration
 include_conf() {
 
@@ -116,7 +103,7 @@ include_conf() {
 is_valid_task() {
 
     local needle="${1:-}"
-    local found=""
+    local found=
 
     for task in "${TASKS[@]}"; do
         if [[ $task  == $needle ]]; then
@@ -128,30 +115,25 @@ is_valid_task() {
     echo ${found}
 }
 
-while getopts "dh" opt; do
-    case $opt in
-        d)
-            debug=1
-            ;;
-        h)
-            usage
-            ;;
-
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
-
-declare -r CUR_TASK=${1:-}
-
 main() {
 
-    [[ $debug -eq 1 ]] && set -x
+    local task=
+
+    while getopts "dht:" opt; do
+        case $opt in
+            d) set -x;;
+            h) show_usage;;
+            t) task=$OPTARG;;
+            *) show_usage;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    # Show usage if task has been specified
+    [[ -z $task ]] && show_usage
 
     # Make sure this is valid task
-    [[ -z $(is_valid_task $CUR_TASK) ]] && error "'${CUR_TASK}' is not a valid task!"
+    [[ -z $(is_valid_task $task) ]] && error "'${task}' is not a valid task!"
 
     # Let's get started
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
@@ -160,20 +142,20 @@ main() {
     check_dependencies
     include_conf
 
-    if [[ $CUR_TASK == "build" || $CUR_TASK == "watch" ]]; then
-        local lib_script="${LIB_DIR}/${CUR_TASK}.sh"
+    if [[ $task == "build" || $task == "watch" ]]; then
+        local lib_script="${LIB_DIR}/${task}.sh"
     else
-        local lib_script="${TASKS_DIR}/${CUR_TASK}.sh"
+        local lib_script="${TASKS_DIR}/${task}.sh"
     fi
 
     [[ ! -f $lib_script ]] && \
         error "'${lib_script}' script is missing in '${TASKS_DIR}'!"
 
-    info "Starting ${CUR_TASK}"
+    info "Starting ${task}"
 
     source $lib_script
 }
 
-main
+main "$@"
 
 exit 0
