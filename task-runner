@@ -17,8 +17,8 @@ declare -r WORKING_DIR="$(pwd -P)"
 declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
 declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
-declare -r DEFAULT_DIST_DIR="${WORKING_DIR}/dist"
-declare -r DEFAULT_SRC_DIR="${WORKING_DIR}/web"
+declare -r DEFAULT_DIST_DIR="dist"
+declare -r DEFAULT_SRC_DIR=""
 
 declare -ra TASKS=(
     clean
@@ -34,17 +34,24 @@ declare -ra TASKS=(
 )
 
 source "${LIB_DIR}/utils/logger.sh"
-source "${LIB_DIR}/tmux.sh"
+source "${LIB_DIR}/utils/tmux.sh"
+
+read_help() {
+    cat <<eom
+Usage: ${SCRIPT} [options] -e <task> -s <source directory> -t <target directory>
+Version: ${VERSION}
+Options:
+  -h: This help
+  -d: Debug mode
+  -e: Executed task name
+  -s: Source directory where to find the assets, default '${DEFAULT_SRC_DIR}'
+  -t: Target directory where to build the assets, default '${DEFAULT_DIST_DIR}'
+Tasks: ${TASKS[@]}
+eom
+}
 
 show_usage() {
-    local help=
-    help+="Usage: ${SCRIPT} [options] <task>\n"
-    help+="Version: ${VERSION}\n"
-    help+="Options:\n"
-    help+=" -h: This help\n"
-    help+=" -d: Debug mode\n"
-    help+="Tasks available: ${TASKS[@]}\n"
-    echo -e ${help} 1>&2
+    echo -e "$(read_help)" 1>&2
     exit 1
 }
 
@@ -71,6 +78,7 @@ check_dependencies() {
 add_npm_bin_to_path() {
     [[ -d $NPM_DIR ]] && \
         export PATH="${NPM_DIR}:$PATH"
+    return 0
 }
 
 # Include the local configuration
@@ -79,17 +87,6 @@ include_conf() {
         error "Configuration file '${RC_FILE}' is missing!"
 
     source $RC_FILE
-
-    readonly SRC_DIR=$DEFAULT_SRC_DIR
-    readonly DIST_DIR=$DEFAULT_DIST_DIR
-
-    if [[ ! -d $DIST_DIR ]]; then
-        mkdir -p "${DIST_DIR}/js"
-        mkdir -p "${DIST_DIR}/css"
-    fi
-
-    info "Source: ${SRC_DIR}"
-    info "Distribution: ${DIST_DIR}"
 }
 
 include_lib() {
@@ -106,6 +103,18 @@ include_lib() {
         error "'${lib_path}' script is missing in '${TASKS_DIR}'!"
 
     source $lib_path
+}
+
+make_target_directories() {
+    [[ ! -d "${DIST_DIR}/js" ]] && mkdir -p "${DIST_DIR}/js"
+    [[ ! -d "${DIST_DIR}/css" ]] && mkdir -p "${DIST_DIR}/css"
+    return 0
+}
+
+check_source_directories() {
+    [[ ! -d "${SRC_DIR}/js" ]] && error "Javascript source directory not found in ${SRC_DIR}/js"
+    [[ ! -d "${SRC_DIR}/scss" ]] && error "SASS source directory not found in ${SRC_DIR}/scss"
+    return 0
 }
 
 # Check whether the task is valid
@@ -126,34 +135,40 @@ check_task() {
 }
 
 main() {
-
     local task=
+    local src_dir=
+    local dist_dir=
 
-    while getopts "dht:" opt; do
+    while getopts "dhe:s:t:" opt; do
         case $opt in
             d) set -x;;
             h) show_usage;;
-            t) task=$OPTARG;;
+            s) src_dir=$OPTARG;;
+            t) dist_dir=$OPTARG;;
+            e) task=$OPTARG;;
             *) show_usage;;
         esac
     done
     shift $((OPTIND-1))
 
-    # Show usage if task has been specified
     [[ -z $task ]] && show_usage
-
-    # Make sure this is valid task
     [[ -z $(check_task $task) ]] && error "'${task}' is not a valid task!"
+    [[ -z $src_dir ]] && src_dir=$DEFAULT_SRC_DIR
+    [[ -z $dist_dir ]] && dist_dir=$DEFAULT_DIST_DIR
 
-    # Let's get started
+    readonly SRC_DIR="${WORKING_DIR}/$src_dir"
+    readonly DIST_DIR="${WORKING_DIR}/$dist_dir"
+
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
 
     add_npm_bin_to_path
     check_dependencies
     include_conf
+    make_target_directories
+    check_source_directories
+
     include_lib $task
 }
 
 main "$@"
 
-exit 0
