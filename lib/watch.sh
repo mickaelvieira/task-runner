@@ -1,9 +1,5 @@
 
-
 watch() {
-
-    echo "watch task"
-
     start_tmux
 
     include_lib watch_tests
