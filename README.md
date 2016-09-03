@@ -25,7 +25,7 @@ $ sudo ln -s /path/to/task-runner /usr/local/bin/task-runner
 $ cd /path/to/your/project
 $ task-runner -s web/ -t web/dist/ -e build # Build the assets
 $ task-runner -s web/ -t web/dist/ -e watch # Watch the assets
-# task-runner -e unwatch                    # Stop watching
+$ task-runner -e unwatch                    # Stop watching
 ```
 
 
