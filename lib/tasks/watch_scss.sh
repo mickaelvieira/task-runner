@@ -22,5 +22,6 @@ watch_css() {
     done
 }
 
+check_sass_source_dir
 start_tmux
 watch_css

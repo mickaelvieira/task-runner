@@ -25,5 +25,6 @@ watch_js() {
     done
 }
 
+check_js_source_dir
 start_tmux
 watch_js

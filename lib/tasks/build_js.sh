@@ -24,4 +24,5 @@ build_js() {
     done
 }
 
+check_js_source_dir
 build_js

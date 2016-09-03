@@ -4,7 +4,7 @@ watch() {
 
     include_lib watch_tests
     include_lib watch_js
-    include_lib watch_css
+    include_lib watch_scss
 
     tmux ls
     tmux list-windows

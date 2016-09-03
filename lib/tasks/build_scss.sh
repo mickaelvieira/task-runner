@@ -19,5 +19,5 @@ build_css() {
     done
 }
 
+check_sass_source_dir
 build_css
-
