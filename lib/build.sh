@@ -1,7 +1,7 @@
 
 build () {
-    polyfills
-    vendors
-    build_js
-    build_css
+    include_lib build_js
+    include_lib build_css
 }
+
+build
