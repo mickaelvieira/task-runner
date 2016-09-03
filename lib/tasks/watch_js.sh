@@ -1,10 +1,9 @@
 
 watch_js() {
-
-    local base
-    local name
-    local bundle
-    local source_map
+    local base=
+    local name=
+    local bundle=
+    local source_map=
 
     local entries=($(find "${SRC_DIR}/js" -name index.js))
     local dest="${DIST_DIR}/js"
@@ -26,4 +25,5 @@ watch_js() {
     done
 }
 
+start_tmux
 watch_js

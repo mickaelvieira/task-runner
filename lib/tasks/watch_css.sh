@@ -1,25 +1,26 @@
-#!/bin/bash
+
 watch_css() {
+    local base=
+    local name=
+    local bundle=
 
+    local entries=($(find "${SRC_DIR}/scss" -name *.scss | grep -vE "_([a-zA-Z-]+)\.scss$"))
+    local dest="${DIST_DIR}/css"
 
-    echo "watch css task"
+    for path_entry in ${entries[@]}; do
 
-    for entry in ${entries[@]}
-    do
-        watch_css_entry "${entry}"
+        base=$(basename ${path_entry})
+        name=${base%.scss}
+        bundle="${dest}/${name}.css"
+
+        echo "---"
+        info "Bundle: ${name}"
+        info "Source: ${path_entry}"
+        info "Destination: ${bundle}"
+
+        tmux new-window -c $WORKING_DIR -n ${name} "sass --watch ${path_entry}:${bundle}"
     done
 }
 
-watch_css_entry() {
-
-    local entry="$1"
-    local dir=$(dirname ${entry})
-    local bundle="bundle.js"
-    local map="bundle.js.map"
-    local name=${dir##*/}
-
-    info "Bundle '${name}': ${entry} > ${bundle} ( ${map} )"
-
-    sass --watch style.scss:style.css
-    tmux new-window -c "${base_dir}" -n ${name} "watchify ${entry} -v -d -o \"exorcist ${dir}/${map} > ${dir}/${bundle}\""
-}
+start_tmux
+watch_css

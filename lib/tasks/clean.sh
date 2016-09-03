@@ -5,8 +5,8 @@ clean() {
     [[ ${#DIST_DIR} < ${#WORKING_DIR} || ${#DIST_DIR} < 2 ]] && \
         error "Dist directory has not been configured correctly!"
 
-    rm -rf "${DIST_DIR}/js/*"
-    rm -rf "${DIST_DIR}/css/*"
+    rm -rvf ${DIST_DIR}/js/*
+    rm -rvf ${DIST_DIR}/css/*
 }
 
 clean
