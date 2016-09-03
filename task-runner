@@ -17,8 +17,8 @@ declare -r WORKING_DIR="$(pwd -P)"
 declare -r NPM_DIR="${WORKING_DIR}/node_modules/.bin"
 declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
-declare -r DEFAULT_DIST_DIR="dist"
 declare -r DEFAULT_SRC_DIR=""
+declare -r DEFAULT_DIST_DIR="dist"
 
 declare -ra TASKS=(
     clean
@@ -30,6 +30,7 @@ declare -ra TASKS=(
     run_tests
     build
     build_js
+    build_css
     build_scss
 )
 
@@ -108,22 +109,38 @@ include_lib() {
 }
 
 make_target_directories() {
-    [[ ! -d "${DIST_DIR}/js" ]] && \
-        mkdir -p "${DIST_DIR}/js"
-    [[ ! -d "${DIST_DIR}/css" ]] && \
-        mkdir -p "${DIST_DIR}/css"
+
+    local answer="y"
+
+    info "Target directories:"
+    info $DIST_DIR_JS
+    info $DIST_DIR_CSS
+
+    [[ ! -d $DIST_DIR_JS || ! -d $DIST_DIR_CSS ]] && \
+        read -e -p "Do you want to create the target directories? [Y/n]: " answer
+
+    [[ $answer == "n" ]] && error "Interrupted"
+
+    [[ ! -d $DIST_DIR_JS ]] && mkdir -p "${DIST_DIR_JS}"
+    [[ ! -d $DIST_DIR_CSS ]] && mkdir -p "${DIST_DIR_CSS}"
     return 0
 }
 
 check_js_source_dir() {
-    [[ ! -d "${SRC_DIR}/js" ]] && \
-        error "Javascript source directory not found in ${SRC_DIR}/js"
+    [[ ! -d "${SRC_DIR_JS}" ]] && \
+        warning "Javascript source directory was not found in ${SRC_DIR_JS}"
     return 0
 }
 
-check_sass_source_dir() {
-    [[ ! -d "${SRC_DIR}/scss" ]] && \
-        error "SASS source directory not found in ${SRC_DIR}/scss"
+check_scss_source_dir() {
+    [[ ! -d "${SRC_DIR_SCSS}" ]] && \
+        warning "SASS source directory was not found in ${SRC_DIR_SCSS}"
+    return 0
+}
+
+check_css_source_dir() {
+    [[ ! -d "${SRC_DIR_CSS}" ]] && \
+        warning "CSS source directory was not found in ${SRC_DIR_CSS}"
     return 0
 }
 
@@ -166,8 +183,15 @@ main() {
     [[ -z $src_dir ]] && src_dir=$DEFAULT_SRC_DIR
     [[ -z $dist_dir ]] && dist_dir=$DEFAULT_DIST_DIR
 
-    readonly SRC_DIR="${WORKING_DIR}/${src_dir%\/}"
-    readonly DIST_DIR="${WORKING_DIR}/${dist_dir%\/}"
+    src_dir="${WORKING_DIR}/${src_dir%\/}"
+    dist_dir="${WORKING_DIR}/${dist_dir%\/}"
+
+    readonly SRC_DIR_JS="${src_dir%\/}/js"
+    readonly SRC_DIR_CSS="${src_dir%\/}/css"
+    readonly SRC_DIR_SCSS="${src_dir%\/}/scss"
+
+    readonly DIST_DIR_JS="${dist_dir%\/}/js"
+    readonly DIST_DIR_CSS="${dist_dir%\/}/css"
 
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
 
@@ -180,4 +204,3 @@ main() {
 }
 
 main "$@"
-

@@ -1,18 +1,16 @@
 
 build_js() {
+    local base=
+    local name=
+    local bundle=
 
-    local base
-    local name
-    local bundle
-
-    local entries=($(find "${SRC_DIR}/js" -name index.js))
-    local dest="${DIST_DIR}/js"
+    local entries=($(find "${SRC_DIR_JS}" -name index.js))
 
     for path_entry in ${entries[@]}; do
 
         base=$(dirname ${path_entry})
         name=${base##*/}
-        bundle="${dest}/${name}.js"
+        bundle="${DIST_DIR_JS}/${name}.js"
 
         echo "---"
         info "Bundle: ${name}"
@@ -24,5 +22,8 @@ build_js() {
     done
 }
 
-check_js_source_dir
-build_js
+if [[ -z $(check_js_source_dir) ]]; then
+    build_js
+else
+    echo $(check_js_source_dir)
+fi

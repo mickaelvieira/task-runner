@@ -4,14 +4,13 @@ watch_css() {
     local name=
     local bundle=
 
-    local entries=($(find "${SRC_DIR}/scss" -name *.scss | grep -vE "_([a-zA-Z-]+)\.scss$"))
-    local dest="${DIST_DIR}/css"
+    local entries=($(find "${SRC_DIR_SCSS}" -name *.scss | grep -vE "_([a-zA-Z-]+)\.scss$"))
 
     for path_entry in ${entries[@]}; do
 
         base=$(basename ${path_entry})
         name=${base%.scss}
-        bundle="${dest}/${name}.css"
+        bundle="${DIST_DIR_JS}/${name}.css"
 
         echo "---"
         info "Bundle: ${name}"
@@ -22,6 +21,9 @@ watch_css() {
     done
 }
 
-check_sass_source_dir
-start_tmux
-watch_css
+if [[ -z $(check_scss_source_dir) ]]; then
+    start_tmux
+    watch_css
+else
+    echo $(check_scss_source_dir)
+fi

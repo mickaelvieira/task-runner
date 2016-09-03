@@ -5,15 +5,14 @@ watch_js() {
     local bundle=
     local source_map=
 
-    local entries=($(find "${SRC_DIR}/js" -name index.js))
-    local dest="${DIST_DIR}/js"
+    local entries=($(find "${SRC_DIR_JS}" -name index.js))
 
     for path_entry in ${entries[@]}; do
 
         base=$(dirname ${path_entry})
         name=${base##*/}
-        bundle="${dest}/${name}.js"
-        source_map="${dest}/${name}.js.map"
+        bundle="${DIST_DIR_JS}/${name}.js"
+        source_map="${DIST_DIR_JS}/${name}.js.map"
 
         echo "---"
         info "Bundle: ${name}"
@@ -25,6 +24,9 @@ watch_js() {
     done
 }
 
-check_js_source_dir
-start_tmux
-watch_js
+if [[ -z $(check_js_source_dir) ]]; then
+    start_tmux
+    watch_js
+else
+    echo $(check_js_source_dir)
+fi

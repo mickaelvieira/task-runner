@@ -18,4 +18,23 @@ $ task-runner -s web/ -t web/dist/ -e watch # Watch the assets
 $ task-runner -e unwatch                    # Stop watching
 ```
 
+## Dependencies
+
+Task runner needs a few dependencies to perform its magic:
+
+- [bash](https://www.gnu.org/software/bash/manual/bashref.html)
+- [tmux](https://tmux.github.io/)
+- [sass](https://sass-lang.com/)
+- [browserify](http://browserify.org/)
+- [exorcist](https://github.com/thlorenz/exorcist)
+- [watchify](https://github.com/substack/watchify)
+- [uglifyjs](https://github.com/mishoo/UglifyJS): 
+- [uglifycss](https://github.com/fmarcia/UglifyCSS)
+- [karma](http://karma-runner.github.io/)
+
+
+
+
+
+
 
