@@ -10,7 +10,7 @@ watch_css() {
 
         base=$(basename ${path_entry})
         name=${base%.scss}
-        bundle="${DIST_DIR_JS}/${name}.css"
+        bundle="${DIST_DIR_CSS}/${name}.css"
 
         echo "---"
         info "Bundle: ${name}"
