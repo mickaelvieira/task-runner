@@ -19,6 +19,7 @@ declare -r RC_FILE="${WORKING_DIR}/.trunrc"
 
 declare -r DEFAULT_SRC_DIR=""
 declare -r DEFAULT_DIST_DIR="dist"
+declare -r DEFAULT_TEST_DIR="tests"
 
 declare -ra TASKS=(
     clean
@@ -32,6 +33,7 @@ declare -ra TASKS=(
     build_js
     build_css
     build_scss
+    genspec
 )
 
 source "${LIB_DIR}/utils/logger.sh"
@@ -51,8 +53,29 @@ Tasks: ${TASKS[@]}
 eom
 }
 
+read_config() {
+    cat <<eom
+Configuration:
+  - Working directory: ${WORKING_DIR}
+  - Tests directory: ${TEST_DIR}
+  - Source directories:
+    - JS: ${SRC_DIR_JS}
+    - CSS: ${SRC_DIR_CSS}
+    - SCSS: ${SRC_DIR_SCSS}
+  - Dist directories:
+    - JS: ${DIST_DIR_JS}
+    - CSS: ${DIST_DIR_CSS}
+
+eom
+}
+
 show_usage() {
     echo -e "$(read_help)" 1>&2
+    exit 1
+}
+
+show_config() {
+    echo -e "$(read_config)" 1>&2
     exit 1
 }
 
@@ -67,8 +90,6 @@ check_dependencies() {
         uglifyjs
         uglifycss
         karma
-        mocha
-        phantomjs
     )
 
     for dep in ${deps[@]}; do
@@ -86,10 +107,8 @@ add_npm_bin_to_path() {
 
 # Include the local configuration
 include_conf() {
-    [[ ! -f $RC_FILE ]] && \
-        error "Configuration file '${RC_FILE}' is missing!"
-
-    source $RC_FILE
+    [[ -f $RC_FILE ]] && source $RC_FILE
+    return 0
 }
 
 include_lib() {
@@ -105,7 +124,7 @@ include_lib() {
     [[ ! -f $lib_path ]] && \
         error "'${lib_path}' script is missing in '${TASKS_DIR}'!"
 
-    source $lib_path
+    source $lib_path "$@"
 }
 
 make_target_directories() {
@@ -165,6 +184,9 @@ main() {
     local task=
     local src_dir=
     local dist_dir=
+    local test_dir=
+
+    include_conf
 
     while getopts "dhe:s:t:" opt; do
         case $opt in
@@ -178,13 +200,13 @@ main() {
     done
     shift $((OPTIND-1))
 
-    [[ -z $task ]] && show_usage
-    [[ -z $(check_task $task) ]] && error "'${task}' is not a valid task!"
     [[ -z $src_dir ]] && src_dir=$DEFAULT_SRC_DIR
     [[ -z $dist_dir ]] && dist_dir=$DEFAULT_DIST_DIR
+    [[ -z $test_dir ]] && test_dir=$DEFAULT_TEST_DIR
 
     src_dir="${WORKING_DIR}/${src_dir%\/}"
     dist_dir="${WORKING_DIR}/${dist_dir%\/}"
+    test_dir="${WORKING_DIR}/${test_dir%\/}"
 
     readonly SRC_DIR_JS="${src_dir%\/}/js"
     readonly SRC_DIR_CSS="${src_dir%\/}/css"
@@ -193,14 +215,19 @@ main() {
     readonly DIST_DIR_JS="${dist_dir%\/}/js"
     readonly DIST_DIR_CSS="${dist_dir%\/}/css"
 
+    readonly TEST_DIR="${test_dir%\/}"
+
+    [[ -z $task ]] && show_config
+    [[ -z $(check_task $task) ]] && error "'${task}' is not a valid task!"
+
     info "${SCRIPT}@${VERSION} ${WORKING_DIR}"
 
     add_npm_bin_to_path
     check_dependencies
-    #include_conf
+
     make_target_directories
 
-    include_lib $task
+    include_lib $task "$@"
 }
 
 main "$@"
